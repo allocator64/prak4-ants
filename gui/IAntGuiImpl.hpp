@@ -30,7 +30,7 @@ namespace antgui
         Point point;
         int teamId;
     public:
-        ConcreteAnt(bool food, bool frozen, Point &p, int teamId)
+        ConcreteAnt(bool food, bool frozen, const Point &p, int teamId)
             : food(food), frozen(frozen), point(p), teamId(teamId) {}
         ConcreteAnt(const Ant &ant) {
             food = ant.hasFood();

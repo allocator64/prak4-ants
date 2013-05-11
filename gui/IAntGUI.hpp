@@ -32,6 +32,10 @@ namespace antgui
 			if (y < p.y) return true;
 			return false;
 		}
+        friend bool operator == (const Point &a, const Point &b)
+        {
+            return a.x == b.x && a.y == b.y;
+        }
 		Point(int x, int y) : x(x), y(y) {}
 		Point() {}
 	};
