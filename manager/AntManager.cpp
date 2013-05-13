@@ -212,8 +212,6 @@ void AntManager::step(int step)
         }
     }
 
-
-
     // scoreboard
 
     for (unsigned int t = 0; t < teamCount; t++)

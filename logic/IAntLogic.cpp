@@ -11,7 +11,7 @@ namespace antlogic
         case 0:
             return std::make_shared<AntLogicTeam01>();
         default:
-            return std::make_shared<AntLogicTeam02>();
+            return std::make_shared<AntLogicTeam03>();
         }
     }
 }

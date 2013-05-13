@@ -74,7 +74,8 @@ class food_iterator: public std::iterator< std::input_iterator_tag, antgui::Food
 
     void fillV(int x, int y, int dx, int dy, int n, int id = 0)
     {
-        if(dx < 3 || dy < 3 || n < 0)
+        static const int minT = 10;
+        if(dx < minT || dy < minT || n < 0)
             return;
 
         for(int i = 0; i < dx; ++i)
