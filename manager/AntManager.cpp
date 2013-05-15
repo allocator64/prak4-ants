@@ -2,6 +2,53 @@
 #include <memory.h>
 
 //
+//  AntObject
+//
+
+void AntObject::stun()
+{
+    _stun = 8;
+    if(hasFood())
+        pManager->food[getP().y][getP().x]++;
+    chFood() = false;
+}
+
+bool AntObject::go(std::shared_ptr<AntObject> Ant, int dx, int dy)
+{
+    int x = Ant->getP().x;
+    int y = Ant->getP().y;
+
+    if(!pManager->inrange(x + dx, y + dy))
+        return false;
+
+    Ant->getP().x += dx;
+    Ant->getP().y += dy;
+
+    pManager->ants[x + dx][y + dy].insert(Ant);
+    pManager->ants[x][y].erase(Ant);
+
+    return true;
+}
+
+bool AntObject::bite(std::shared_ptr<AntObject> Ant, int dx, int dy)
+{
+    int x = Ant->getP().x;
+    int y = Ant->getP().y;
+
+    if(!pManager->inrange(x + dx, y + dy))
+        return false;
+
+    if(pManager->ants[x + dx][y + dy].empty())
+        return true;
+
+    (*pManager->ants[x + dx][y + dy].begin())->stun();
+
+    return true;
+}
+
+AntManager * AntObject::pManager = nullptr;
+
+//
 //  AntManager
 //
 
@@ -22,6 +69,8 @@ AntManager::AntManager(int height, int width, int teamCount, int maxAntCountPerT
     antRespawnPos[3] = point(width - 1, height - 1);
     antRespawnPos.resize(teamCount);
     antRespawnPos.shrink_to_fit();
+
+    AntObject::pManager = this;
 }
 
 void AntManager::step(int step)
@@ -70,7 +119,7 @@ void AntManager::step(int step)
                 auto safeIter = ants[y][x];
                 for(auto & AntPtr : safeIter)
                 {
-                    if(AntPtr->getTeamId() == team && AntPtr->getFlag() == false)
+                    if(AntPtr->getTeamId() == team && AntPtr->getFlag() == false && !AntPtr->isFrozen())
                     {
                         std::cout << "Processing ant : team = " << team << std::endl;
                         std::shared_ptr<antlogic::IAntLogic> logic = antlogic::IAntLogic::GetAntLogic(AntPtr->getTeamId());
@@ -114,13 +163,6 @@ void AntManager::step(int step)
                             }
                         }
 
-                        for(int i = 0; i < 3; ++i)
-                        {
-                            for(int j = 0; j < 3; ++j)
-                                std::cout << sensor[i][j].isWall << " ";
-                            std::cout << std::endl;
-                        }
-
                         antlogic::AntAction res = logic->GetAction(*AntPtr->getLogic(), sensor);
                         if(res.putSmell)
                         {
@@ -135,52 +177,36 @@ void AntManager::step(int step)
                         switch(res.actionType)
                         {
                         case antlogic::AntActionType::MOVE_UP:
-                            if(inrange(x, y - 1))
-                            {
-                                AntPtr->getP().y -=1;
-                                ants[y - 1][x].insert(AntPtr);
-                                ants[y][x].erase(AntPtr);
-                            }
-                            else
-                                std::cout << "bad move" << std::endl;
+                            if(!AntObject::go(AntPtr, 0, -1))
+                                std::cout << "MOVE_UP failed" << std::endl;
                             break;
                         case antlogic::AntActionType::MOVE_LEFT:
-                            if(inrange(x - 1, y))
-                            {
-                                AntPtr->getP().x -=1;
-                                ants[y][x - 1].insert(AntPtr);
-                                ants[y][x].erase(AntPtr);
-                            }
-                            else
-                                std::cout << "bad move" << std::endl;
+                            if(!AntObject::go(AntPtr, -1, 0))
+                                std::cout << "MOVE_LEFT failed" << std::endl;
                             break;
                         case antlogic::AntActionType::MOVE_DOWN:
-                            if(inrange(x, y + 1))
-                            {
-                                AntPtr->getP().y +=1;
-                                ants[y + 1][x].insert(AntPtr);
-                                ants[y][x].erase(AntPtr);
-                            }
-                            else
-                                std::cout << "bad move" << std::endl;
+                            if(!AntObject::go(AntPtr, 0, 1))
+                                std::cout << "MOVE_DOWN failed" << std::endl;
                             break;
                         case antlogic::AntActionType::MOVE_RIGHT:
-                            if(inrange(x + 1, y))
-                            {
-                                AntPtr->getP().x +=1;
-                                ants[y][x + 1].insert(AntPtr);
-                                ants[y][x].erase(AntPtr);
-                            }
-                            else
-                                std::cout << "bad move" << std::endl;
+                            if(!AntObject::go(AntPtr, 1, 0))
+                                std::cout << "MOVE_RIGHT failed" << std::endl;
                             break;
                         case antlogic::AntActionType::BITE_UP:
+                            if(!AntObject::bite(AntPtr, 0, -1))
+                                std::cout << "BITE_UP failed" << std::endl;
                             break;
                         case antlogic::AntActionType::BITE_LEFT:
+                            if(!AntObject::bite(AntPtr, -1, 0))
+                                std::cout << "BITE_LEFT failed" << std::endl;
                             break;
                         case antlogic::AntActionType::BITE_DOWN:
+                            if(!AntObject::bite(AntPtr, 0, 1))
+                                std::cout << "BITE_DOWN failed" << std::endl;
                             break;
                         case antlogic::AntActionType::BITE_RIGHT:
+                            if(!AntObject::bite(AntPtr, 1, 0))
+                                std::cout << "BITE_RIGHT failed" << std::endl;
                             break;
                         case antlogic::AntActionType::GET:
                             AntPtr->chFood() = true;

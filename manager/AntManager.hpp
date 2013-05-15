@@ -154,6 +154,8 @@ public:
     }
 };
 
+class AntManager;
+
 class AntObject : public antlogic::Ant
 {
     char *_mem;
@@ -162,6 +164,9 @@ class AntObject : public antlogic::Ant
     int _stun;
     bool _flag;
     point _p;
+    static AntManager * pManager;
+
+    friend class AntManager;
 public:
     AntObject(const point &p, int teamid)
         :_mem(nullptr), _hasFood(false), _teamId(teamid), _stun(0), _flag(false), _p(p)
@@ -198,7 +203,7 @@ public:
 
     antlogic::Ant * getLogic()
     {
-        return static_cast<antlogic::Ant *>(this);
+        return dynamic_cast<antlogic::Ant *>(this);
     }
     std::shared_ptr<antgui::Ant> getGui() const
     {
@@ -215,16 +220,16 @@ public:
         return _flag;
     }
 
-    void stun()
-    {
-        _stun = 8;
-    }
+    void stun();
     void update()
     {
         if(_stun > 0)
             _stun--;
         _flag = false;
     }
+
+    static bool go(std::shared_ptr<AntObject > Ant, int dx, int dy);
+    static bool bite(std::shared_ptr<AntObject > Ant, int dx, int dy);
 };
 
 class AntManager
@@ -250,6 +255,7 @@ class AntManager
         return x >= 0 && y >= 0 && x < width && y < height;
     }
 
+    friend class AntObject;
 public:
     AntManager(int height,
                int width,

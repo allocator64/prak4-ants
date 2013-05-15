@@ -3,7 +3,7 @@
 #ifndef IANTLOGICIMPL_HPP
 #define IANTLOGICIMPL_HPP
 
-	#define id ant.getMemory()[0]
+    #define __id ant.getMemory()[0]
 	#define x ant.getMemory()[1]
 	#define y ant.getMemory()[2]
 	#define job ant.getMemory()[3]
@@ -52,6 +52,12 @@ namespace antlogic
 	public:
 		AntAction GetAction(const Ant&, AntSensor[][3]);
 	};
+
+    class AntLogicTeam04 : public IAntLogic
+    {
+    public:
+        AntAction GetAction(const Ant&, AntSensor[][3]);
+    };
 
 }
 

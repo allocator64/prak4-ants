@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <map>
+#include <fstream>
+
 namespace antlogic
 {
     AntAction AntLogicTeam01::GetAction(const antlogic::Ant &ant, AntSensor sensors[3][3])
@@ -44,16 +47,16 @@ namespace antlogic
         AntAction res;
         long k;
 
-        if( id == 0 )
+        if( __id == 0 )
         {
             lastkick = -1;
             srand( 6754773 );
 
-            id = sensors[1][1].smell + 1;
+            __id = sensors[1][1].smell + 1;
             res.putSmell = true;
-            res.smell = id;
+            res.smell = __id;
 
-            if( id == 1 )
+            if( __id == 1 )
             {
                 l = 1; r = 3; u = 0; d = 2;
                 if( sensors[2][1].isWall ) { l = 3; r = 1; }
@@ -62,18 +65,18 @@ namespace antlogic
 
             x = 0;
             y = 0;
-            job = 0; if( id == 11 || id == 12 ) job = 1;
-            if( id >= 13 && id <= 15 ) job = 2;
-            //if( id >= 16 && id <= 18 ) job = 4;
+            job = 0; if( __id == 11 || __id == 12 ) job = 1;
+            if( __id >= 13 && __id <= 15 ) job = 2;
+            //if( __id >= 16 && __id <= 18 ) job = 4;
 
             if( job == 2 )
             {
-                if( id == 13 )
+                if( __id == 13 )
                 {
                     go( dat, d );
                     return res;
                 }
-                if( id == 14 )
+                if( __id == 14 )
                 {
                     go( dat, r );
                     return res;
@@ -83,9 +86,9 @@ namespace antlogic
 
         if( job == 1 )
         {
-            if( id == 12 && x == 0 && y == 0 )
+            if( __id == 12 && x == 0 && y == 0 )
                 go( dat, r );
-            else if( id == 12 && x == 1 && y == 0 )
+            else if( __id == 12 && x == 1 && y == 0 )
                 go( dat, d );
 
             else
@@ -111,7 +114,7 @@ namespace antlogic
 
         if( job == 2 )
         {
-            if( id == 13 )
+            if( __id == 13 )
             {
                 if( nearHill( dat ) )
                 {
@@ -125,7 +128,7 @@ namespace antlogic
                     job = 0;
                 else go( dat, r );
             }
-            if( id == 14 )
+            if( __id == 14 )
             {
                 if( nearHill( dat ) )
                 {
@@ -139,7 +142,7 @@ namespace antlogic
                     job = 0;
                 else go( dat, d );
             }
-            if( id == 15 )
+            if( __id == 15 )
             {
                 if( nearHill( dat ) )
                 {
@@ -159,7 +162,7 @@ namespace antlogic
         }
         else if( job == 4 )
         {
-            if( id == 16 )
+            if( __id == 16 )
             {
                 if( gss( dat, r ).isWall )
                 {
@@ -181,7 +184,7 @@ namespace antlogic
                 }
                 else go( dat, r );
             }
-            if( id == 17 )
+            if( __id == 17 )
             {
                 if( gss( dat, d ).isWall )
                 {
@@ -203,7 +206,7 @@ namespace antlogic
                 }
                 else go( dat, d );
             }
-            if( id == 18 )
+            if( __id == 18 )
             {
                 if( gss( dat, r ).isWall && gss( dat, d ).isWall )
                 {
@@ -231,7 +234,7 @@ namespace antlogic
         }
         else if( job == 3 )
         {
-            if( id == 16 || id == 18 )
+            if( __id == 16 || __id == 18 )
             {
                 if( gss( dat, r ).isWall && ant.hasFood() )
                     go( dat, l );
@@ -243,7 +246,7 @@ namespace antlogic
                     job = 4;
                 }
             }
-            if( id == 17 )
+            if( __id == 17 )
             {
                 if( gss( dat, d ).isWall && ant.hasFood() )
                     go( dat, u );
@@ -610,6 +613,127 @@ namespace antlogic
                     memory[5]--;
                 }
             }
+        }
+
+        return result;
+    }
+
+    AntAction AntLogicTeam04::GetAction(const antlogic::Ant &ant, antlogic::AntSensor sensors[3][3])
+    {
+        /* AntLanguage
+         * '>' ++ptr
+         * '<' --ptr
+         * '+' ++*ptr
+         * '-' --*ptr
+         * '.' result.actionType = *ptr
+         * ':' result.putSmell = bool(*ptr)
+         * ';' result.smell = *ptr
+         * '[' while (*ptr) {
+         * ']' }
+         * 'S' *ptr = sensors[*ptr / 3][*ptr % 3] as raw values [array is copied]
+         * 'A' *ptr = ant as raw values
+         * 'R' *ptr = memory as raw values [32 chars]
+         * 'W' write ant memory from buffer [32 chars]
+        */
+
+        AntAction result;
+
+        std::map<int, int> mem;
+        int ptr = 0;
+        std::string code;
+        int code_ptr = 0;
+        int currId = 0;
+        int inside;
+        antlogic::AntSensor sensor;
+
+        std::ifstream fin("04-logic.bf");
+        std::string s;
+        while(fin >> s)
+            code += s;
+        fin.close();
+
+        while(code_ptr < code.size())
+        {
+            switch(code[code_ptr])
+            {
+            case '>':
+                ptr++;
+                break;
+            case '<':
+                ptr--;
+                break;
+            case '+':
+                mem[ptr]++;
+                break;
+            case '-':
+                mem[ptr]--;
+                break;
+            case '.':
+                result.actionType = antlogic::AntActionType(mem[ptr]);
+                break;
+            case ':':
+                result.putSmell = bool(mem[ptr]);
+                break;
+            case ';':
+                result.smell = mem[ptr];
+                break;
+            case '[':
+                if(mem[ptr] > 0)
+                {
+                    inside = 1;
+                    while(inside > 0)
+                    {
+                        char c = code[++code_ptr];
+                        if(c == '[')
+                            inside++;
+                        else if (c == ']')
+                            inside--;
+                    }
+                }
+                break;
+            case ']':
+                inside = 1;
+                while(inside > 0)
+                {
+                    char c = code[--code_ptr];
+                    if(c == '[')
+                        inside--;
+                    else if (c == ']')
+                        inside++;
+                }
+                code_ptr--;
+                break;
+            case 'S':
+                currId = mem[ptr];
+                sensor = sensors[currId / 3][currId % 3];
+                mem[ptr++] = sensor.isEnemy;
+                mem[ptr++] = sensor.isEnemyHill;
+                mem[ptr++] = sensor.isFood;
+                mem[ptr++] = sensor.isFriend;
+                mem[ptr++] = sensor.isMyHill;
+                mem[ptr++] = sensor.isWall;
+                mem[ptr++] = sensor.smell;
+                mem[ptr++] = sensor.smellIntensity;
+                ptr -= 8;
+                break;
+            case 'A':
+                currId = mem[ptr];
+                mem[ptr++] = ant.getTeamId();
+                mem[ptr++] = ant.hasFood();
+                ptr -= 2;
+                break;
+            case 'R':
+                for(int i = 0; i < 32; ++i)
+                    mem[ptr++] = ant.getMemory()[i];
+                ptr -= 32;
+                break;
+            case 'W':
+                for(int i = 0; i < 32; ++i)
+                    ant.getMemory()[i] = mem[ptr++];
+                ptr -= 32;
+                break;
+            }
+            code_ptr++;
         }
 
         return result;
