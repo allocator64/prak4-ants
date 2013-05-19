@@ -738,4 +738,160 @@ namespace antlogic
 
         return result;
     }
+
+    AntAction AntLogicTeam05::GetAction(const antlogic::Ant &ant, antlogic::AntSensor sensors[3][3])
+    {
+        char * memory = ant.getMemory();
+        bool hasFood = ant.hasFood();
+
+        AntAction result;
+        if (hasFood && sensors[1][1].isMyHill) result.actionType = PUT;
+        else
+        if (!hasFood && !sensors[1][1].isMyHill && sensors[1][1].isFood)
+        {
+            memory[6]=memory[3];
+            memory[7]=memory[4];
+            result.actionType = GET;
+        }
+        else
+        {
+            if(memory[0]<1)
+            {
+                memory[0]=sensors[1][1].smell+1;
+                result.putSmell = true;
+                result.smell = memory[0];
+                if(sensors[0][1].isWall&&sensors[1][0].isWall) memory[1]=0; // -
+                if(sensors[0][1].isWall&&sensors[1][2].isWall) memory[1]=1; // -
+                if(sensors[2][1].isWall&&sensors[1][0].isWall) memory[1]=2; // -
+                if(sensors[2][1].isWall&&sensors[1][2].isWall) memory[1]=3; // -
+
+                if(memory[1]==0) {memory[3]=1; memory[4]=1;}
+                if(memory[1]==1) {memory[3]=1; memory[4]=100;}
+                if(memory[1]==2) {memory[3]=100; memory[4]=1;}
+                if(memory[1]==3) {memory[3]=100; memory[4]=100;}
+            }
+
+            if(sensors[1][1].isMyHill)
+            {
+                if(memory[1]==0) if(memory[0]%11<6) memory[2]=6; else memory[2]=5;
+                if(memory[1]==1) if(memory[0]%11<6) memory[2]=3; else memory[2]=4;
+                if(memory[1]==2) if(memory[0]%11<6) memory[2]=8; else memory[2]=7;
+                if(memory[1]==3) if(memory[0]%11<6) memory[2]=1; else memory[2]=2;
+            }
+
+            if(hasFood)
+            {
+                if((memory[1]==0||memory[1]==1)&&(!sensors[0][1].isWall)) result.actionType = MOVE_LEFT;
+                else
+                if((memory[1]==2||memory[1]==3)&&(!sensors[2][1].isWall)) result.actionType = MOVE_RIGHT;
+                else
+                if((memory[1]==0||memory[1]==2)&&(!sensors[1][0].isWall)) result.actionType = MOVE_UP;
+                else
+                if((memory[1]==1||memory[1]==3)&&(!sensors[1][2].isWall)) result.actionType = MOVE_DOWN;
+            }
+            else
+            if(memory[5]!=0)
+            {
+#undef x
+#undef y
+                int x = memory[3] - memory[6];
+                int y = memory[4] - memory[7];
+                if(abs(y)>abs(x))
+                {
+                    if(y>0) result.actionType = MOVE_UP; else result.actionType = MOVE_DOWN;
+                }
+                else
+                {
+                    if(x>0) result.actionType = MOVE_LEFT; else result.actionType = MOVE_RIGHT;
+                }
+
+                int g=memory[3], h=memory[4];
+                switch(result.actionType)
+                {
+                    case MOVE_UP: g--; break;
+                    case MOVE_DOWN: g++; break;
+                    case MOVE_LEFT: h--; break;
+                    case MOVE_RIGHT: h++; break;
+                }
+
+                if(g==memory[6]&&h==memory[7])
+                {
+                    for(int i=8;i<32;i++)
+                        memory[i-2]=memory[i];
+                    memory[5]=0;
+                }
+            }
+            else
+            {
+                if((rand()%100)<70)
+                {
+                    switch(memory[2])
+                    {
+                        case 1: result.actionType = MOVE_LEFT; break;
+                        case 2: result.actionType = MOVE_UP; break;
+                        case 3: result.actionType = MOVE_UP; break;
+                        case 4: result.actionType = MOVE_RIGHT; break;
+                        case 5: result.actionType = MOVE_RIGHT; break;
+                        case 6: result.actionType = MOVE_DOWN; break;
+                        case 7: result.actionType = MOVE_DOWN; break;
+                        case 8: result.actionType = MOVE_LEFT; break;
+                    }
+                }
+                else
+                {
+                    switch(memory[2])
+                    {
+                        case 1: result.actionType = MOVE_UP; break;
+                        case 2: result.actionType = MOVE_LEFT; break;
+                        case 3: result.actionType = MOVE_RIGHT; break;
+                        case 4: result.actionType = MOVE_UP; break;
+                        case 5: result.actionType = MOVE_DOWN; break;
+                        case 6: result.actionType = MOVE_RIGHT; break;
+                        case 7: result.actionType = MOVE_LEFT; break;
+                        case 8: result.actionType = MOVE_DOWN; break;
+                    }
+                }
+
+                if(sensors[1][2].isWall)
+                {
+                    if(memory[2]==8) memory[2]=2; else
+                    if(memory[2]==7) memory[2]=1; else
+                    if(memory[2]==6) memory[2]=4; else
+                    if(memory[2]==5) memory[2]=3;
+                }
+                if(sensors[1][0].isWall)
+                {
+                    if(memory[2]==1) memory[2]=7; else
+                    if(memory[2]==2) memory[2]=8; else
+                    if(memory[2]==3) memory[2]=5; else
+                    if(memory[2]==4) memory[2]=6;
+                }
+                if(sensors[0][1].isWall)
+                {
+                    if(memory[2]==7) memory[2]=5; else
+                    if(memory[2]==8) memory[2]=6; else
+                    if(memory[2]==1) memory[2]=3; else
+                    if(memory[2]==2) memory[2]=4;
+                }
+                if(sensors[2][1].isWall)
+                {
+                    if(memory[2]==3) memory[2]=1; else
+                    if(memory[2]==4) memory[2]=2; else
+                    if(memory[2]==5) memory[2]=7; else
+                    if(memory[2]==6) memory[2]=8;
+                }
+            }
+        }
+
+        switch(result.actionType)
+        {
+            case MOVE_UP: memory[3]--; break;
+            case MOVE_DOWN: memory[3]++; break;
+            case MOVE_LEFT: memory[4]--; break;
+            case MOVE_RIGHT: memory[4]++; break;
+        }
+
+        return result;
+    }
+
 }

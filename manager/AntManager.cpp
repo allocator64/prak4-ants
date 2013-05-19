@@ -24,8 +24,8 @@ bool AntObject::go(std::shared_ptr<AntObject> Ant, int dx, int dy)
     Ant->getP().x += dx;
     Ant->getP().y += dy;
 
-    pManager->ants[x + dx][y + dy].insert(Ant);
-    pManager->ants[x][y].erase(Ant);
+    pManager->ants[y + dy][x + dx].insert(Ant);
+    pManager->ants[y][x].erase(Ant);
 
     return true;
 }

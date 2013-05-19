@@ -9,9 +9,9 @@ namespace antlogic
         switch (teamId % 2)
         {
         case 0:
-            return std::make_shared<AntLogicTeam01>();
+            return std::make_shared<AntLogicTeam05>();
         default:
-            return std::make_shared<AntLogicTeam03>();
+            return std::make_shared<AntLogicTeam05>();
         }
     }
 }

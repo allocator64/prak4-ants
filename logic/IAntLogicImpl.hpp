@@ -59,6 +59,11 @@ namespace antlogic
         AntAction GetAction(const Ant&, AntSensor[][3]);
     };
 
+    class AntLogicTeam05 : public IAntLogic
+    {
+    public:
+        AntAction GetAction(const Ant&, AntSensor[][3]);
+    };
 }
 
 #endif
